@@ -1,0 +1,5 @@
+NODE_ENV: production
+# DEBUG: '*'
+
+BUCKET: "9w-tool"
+PREFIX_FOLDER: "confluence/gravity-image-annotation/files/"

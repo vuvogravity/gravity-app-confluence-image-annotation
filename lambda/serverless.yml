@@ -1,0 +1,69 @@
+service: gravity-app-confluence
+
+plugins:
+  - serverless-offline
+  - serverless-prune-versions
+
+provider:
+  versionFunctions: false
+  name: aws
+  endpointType: REGIONAL
+  region: us-east-2
+  memorySize: 512
+  timeout: 30
+  runtime: nodejs18.x
+  stage: ${opt:stage, self:custom.defaultStage}
+  profile: ${self:custom.profiles.${self:provider.stage}}
+  environment: ${file(./src/config/config.${opt:stage, self:custom.defaultStage}.yml)}
+  deploymentBucket:
+    name: ${self:provider.environment.BUCKET}
+    serverSideEncryption: AES256
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource: "*"
+
+functions:
+  upload:
+    handler: src/handler.upload
+    events:
+      - http:
+          path: upload
+          method: get
+          cors:
+            origin: '*' 
+            headers: 
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - x-amz-meta-filekey
+              - x-amz-meta-filename
+package:
+  patterns:
+    - "!.git/**"
+    - "!.idea/**"
+    - "!.travis.yml"
+    - "!yarn.lock"
+    - "!src/config/*.yml"
+    - "!src/config/*.json"
+custom:
+  deploymentBucket:
+    versioning: false
+    accelerate: true
+    blockPublicAccess: true
+  serverless-offline:
+    localEnvironment: true
+  prune:
+    automatic: true
+    includeLayers: true
+    number: 2
+  contentEncoding:
+    contentCompression: 1024
+  defaultStage: dev
+  env: ${file(./src/config/config.${opt:stage, self:custom.defaultStage}.yml)}
+  profiles:
+    dev: 9thwonder-vn
+    prod: 9thwonder-vn

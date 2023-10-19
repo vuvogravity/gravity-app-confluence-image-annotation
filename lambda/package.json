@@ -1,0 +1,32 @@
+{
+  "name": "gravity-app-confluence",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "nodemon -e js -x serverless offline --stage dev",
+    "start:prod": "nodemon -e js -x serverless offline --stage prod",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove --stage prod",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.405.0",
+    "@aws-sdk/s3-presigned-post": "^3.405.0",
+    "@aws-sdk/s3-request-presigner": "^3.405.0",
+    "mime": "^3.0.0",
+    "moment": "^2.29.4",
+    "nodemon": "^3.0.1",
+    "serverless": "^3.34.0",
+    "serverless-offline": "^12.0.4",
+    "serverless-prune-versions": "^1.0.4",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "graceful-fs": "^4.2.6"
+  }
+}

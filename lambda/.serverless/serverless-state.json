@@ -1,0 +1,472 @@
+{
+  "service": {
+    "service": "gravity-app-confluence",
+    "serviceObject": {
+      "name": "gravity-app-confluence"
+    },
+    "provider": {
+      "versionFunctions": false,
+      "name": "aws",
+      "endpointType": "REGIONAL",
+      "region": "us-east-2",
+      "memorySize": 512,
+      "timeout": 30,
+      "runtime": "nodejs18.x",
+      "stage": "prod",
+      "profile": "9thwonder-vn",
+      "environment": {
+        "NODE_ENV": "production",
+        "BUCKET": "9w-tool",
+        "PREFIX_FOLDER": "confluence/gravity-image-annotation/files/"
+      },
+      "deploymentBucket": "9w-tool",
+      "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:*"
+          ],
+          "Resource": "*"
+        }
+      ],
+      "deploymentBucketObject": {
+        "name": "9w-tool",
+        "serverSideEncryption": "AES256"
+      },
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "UploadLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/gravity-app-confluence-prod-upload"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "gravity-app-confluence",
+                        "prod",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/gravity-app-confluence-prod*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/gravity-app-confluence-prod*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][0]"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "gravity-app-confluence",
+                    "prod",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "UploadLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "9w-tool",
+                "S3Key": "serverless/gravity-app-confluence/prod/1697703294482-2023-10-19T08:14:54.482Z/gravity-app-confluence.zip"
+              },
+              "Handler": "src/handler.upload",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "gravity-app-confluence-prod-upload",
+              "MemorySize": 512,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "NODE_ENV": "production",
+                  "BUCKET": "9w-tool",
+                  "PREFIX_FOLDER": "confluence/gravity-image-annotation/files/"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "UploadLogGroup"
+            ]
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+              "Name": "prod-gravity-app-confluence",
+              "EndpointConfiguration": {
+                "Types": [
+                  "REGIONAL"
+                ]
+              },
+              "Policy": ""
+            }
+          },
+          "ApiGatewayResourceUpload": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "upload",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUploadOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-amz-meta-filekey,x-amz-meta-filename'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUpload"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUploadGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUpload"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "UploadLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "UploadLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1697703287125": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "prod"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodUploadOptions",
+              "ApiGatewayMethodUploadGet"
+            ]
+          },
+          "UploadLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "UploadLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "9w-tool",
+            "Export": {
+              "Name": "sls-gravity-app-confluence-prod-ServerlessDeploymentBucketName"
+            }
+          },
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/prod"
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-gravity-app-confluence-prod-ServiceEndpoint"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "custom": {
+      "deploymentBucket": {
+        "versioning": false,
+        "accelerate": true,
+        "blockPublicAccess": true
+      },
+      "serverless-offline": {
+        "localEnvironment": true
+      },
+      "prune": {
+        "automatic": true,
+        "includeLayers": true,
+        "number": 2
+      },
+      "contentEncoding": {
+        "contentCompression": 1024
+      },
+      "defaultStage": "dev",
+      "env": {
+        "NODE_ENV": "production",
+        "BUCKET": "9w-tool",
+        "PREFIX_FOLDER": "confluence/gravity-image-annotation/files/"
+      },
+      "profiles": {
+        "dev": "9thwonder-vn",
+        "prod": "9thwonder-vn"
+      }
+    },
+    "plugins": [
+      "serverless-offline",
+      "serverless-prune-versions"
+    ],
+    "pluginsData": {},
+    "functions": {
+      "upload": {
+        "handler": "src/handler.upload",
+        "events": [
+          {
+            "http": {
+              "path": "upload",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "x-amz-meta-filekey",
+                  "x-amz-meta-filename"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "gravity-app-confluence-prod-upload",
+        "package": {},
+        "memory": 512,
+        "timeout": 30,
+        "runtime": "nodejs18.x",
+        "vpc": {}
+      }
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "service": "gravity-app-confluence",
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "package": {
+        "patterns": [
+          "!.git/**",
+          "!.idea/**",
+          "!.travis.yml",
+          "!yarn.lock",
+          "!src/config/*.yml",
+          "!src/config/*.json"
+        ],
+        "artifactsS3KeyDirname": "serverless/gravity-app-confluence/prod/code-artifacts",
+        "deploymentBucket": "9w-tool",
+        "artifact": "/Users/vu.vo/Projects/App-Confluence/gravity-app-confluence-image-annotation/lambda/.serverless/gravity-app-confluence.zip",
+        "artifactDirectoryName": "serverless/gravity-app-confluence/prod/1697703294482-2023-10-19T08:14:54.482Z"
+      },
+      "custom": {
+        "$ref": "$[\"service\"][\"custom\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false,
+    "artifact": "/Users/vu.vo/Projects/App-Confluence/gravity-app-confluence-image-annotation/lambda/.serverless/gravity-app-confluence.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/gravity-app-confluence/prod/1697703294482-2023-10-19T08:14:54.482Z",
+    "artifact": "gravity-app-confluence.zip"
+  }
+}

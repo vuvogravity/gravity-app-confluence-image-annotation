@@ -1,0 +1,6 @@
+NODE_ENV: development
+# DEBUG: '*'
+
+BUCKET: "9w-tool"
+PREFIX_FOLDER: "confluence/gravity-image-annotation/files/"
+AWS_PROFILE: "9thwonder-vn"

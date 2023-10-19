@@ -1,6 +1,6 @@
 {
   "author": "WeAreAthlon <hello@weareathlon.com> (https://www.weareathlon.com)",
-  "name": "@weareathlon/frontend-webpack-boilerplate",
+  "name": "gravity-app-confluence-image-annotation",
   "version": "5.17.0",
   "description": "Starter project template boilerplate based on Webpack with SASS/PostCSS and babel ES6/7 support.",
   "homepage": "https://github.com/WeAreAthlon/frontend-webpack-boilerplate#readme",
@@ -80,5 +80,11 @@
     "stats": "webpack --config configuration/webpack.prod.config.js --mode=production --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json"
   },
   "target": "web",
-  "dependencies": {}
+  "dependencies": {
+    "axios": "^1.5.1",
+    "buffer": "^6.0.3",
+    "fabric": "^5.3.0",
+    "file-saver": "^2.0.5",
+    "jquery": "^3.7.1"
+  }
 }
