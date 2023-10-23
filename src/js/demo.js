@@ -15,10 +15,17 @@ const initCanvas = async () => {
   canvas.setBackgroundImage(
     'images/content/header.png',
     // "https://9w-tool.s3.us-east-2.amazonaws.com/confluence/gravity-image-annotation/files/header.png",
-    function () {
-      canvas.renderAll();
-    },
+    canvas.renderAll.bind(canvas), {
+      // opacity: 0.5,
+      // angle: 45,
+      // left: 400,
+      // top: 400,
+      originX: 'left',
+      originY: 'top',
+      crossOrigin: 'anonymous'
+    }
   );
+  // canvas.setDimensions({width: width, height: height});
 
   if(oldData) {
     canvas.loadFromJSON(oldData, canvas.renderAll.bind(canvas));
@@ -35,6 +42,7 @@ const initCanvas = async () => {
 
   // trigger button  id btnSave to save canvas as image
   document.getElementById("btnSave").addEventListener("click", function () {
+    $('#btnSave').prop('disabled', true);
     // get canvas data
     var image = canvas.toDataURL({
       format: "jpeg",
@@ -65,6 +73,8 @@ const initCanvas = async () => {
         return;
       }
       console.log(data, "data");
+      $('#btnSave').prop('disabled', false);
+      window.history.go(-1);
     });
   });
 };
